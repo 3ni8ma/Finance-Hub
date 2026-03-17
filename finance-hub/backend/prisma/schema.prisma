@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+
+  holdings   Holding[]
+  snapshots  PortfolioSnapshot[]
+  strategies SavedStrategy[]
+  alerts     PriceAlert[]
+
+  @@map("users")
+}
+
+model Holding {
+  id           String   @id @default(cuid())
+  userId       String
+  ticker       String
+  quantity     Float
+  avgBuyPrice  Float
+  purchaseDate DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("holdings")
+}
+
+model PortfolioSnapshot {
+  id         String   @id @default(cuid())
+  userId     String
+  totalValue Float
+  recordedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("portfolio_snapshots")
+}
+
+model SavedStrategy {
+  id           String   @id @default(cuid())
+  userId       String
+  strategyName String
+  parameters   Json
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("saved_strategies")
+}
+
+model PriceAlert {
+  id          String   @id @default(cuid())
+  userId      String
+  ticker      String
+  condition   String   // 'above' | 'below'
+  targetPrice Float
+  triggered   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("price_alerts")
+}
